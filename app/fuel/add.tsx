@@ -8,7 +8,6 @@ import { z } from 'zod';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { fuelRecords } from '@/lib/fuel-records';
-import { Calendar } from 'lucide-react-native';
 
 const fuelRecordSchema = z.object({
   date: z.string(),
