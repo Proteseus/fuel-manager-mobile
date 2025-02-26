@@ -1,10 +1,19 @@
 {
   "build": {
-    "development": {
-      "developmentClient": true,
-      "distribution": "internal"
-    },
     "preview": {
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "preview2": {
+      "android": {
+        "gradleCommand": ":app:assembleRelease"
+      }
+    },
+    "preview3": {
+      "developmentClient": true
+    },
+    "preview4": {
       "distribution": "internal"
     },
     "production": {
@@ -13,5 +22,8 @@
         "EXPO_PUBLIC_API_URL": "https://fueler.mssaba.com/api"
       }
     }
+  },
+  "cli": {
+    "appVersionSource": "remote"
   }
 }
