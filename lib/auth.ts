@@ -8,7 +8,6 @@ export const auth = {
     if (response.error) throw new Error(response.error);
     if (!response.data) throw new Error('No data received');
     
-    await AsyncStorage.setItem('token', response.data.token);
     return response.data;
   },
 

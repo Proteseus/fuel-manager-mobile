@@ -82,6 +82,8 @@ export default function RootLayout() {
   useEffect(() => {
     if (!loading && !authenticated && !['/login', '/register'].includes(pathname)) {
       router.replace('/login');
+    } else if (!loading && authenticated && ['/login', '/register'].includes(pathname)) {
+      router.replace('/');
     }
   }, [loading, authenticated, pathname]);
 
@@ -157,6 +159,12 @@ export default function RootLayout() {
           options={{
             title: 'Add Fuel Record',
             presentation: 'modal'
+          }}
+        />
+        <Stack.Screen 
+          name="fuel/records/[id]"
+          options={{
+            title: 'Fuel Records',
           }}
         />
         <Stack.Screen 

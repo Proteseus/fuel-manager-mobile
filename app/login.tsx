@@ -4,6 +4,7 @@ import { Text, TextInput, Button, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, useRouter } from 'expo-router';
 import { auth } from '../lib/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Login() {
   const router = useRouter();
@@ -17,8 +18,9 @@ export default function Login() {
     setLoading(true);
     setError('');
     try {
-      await auth.login(phone, password);
-      router.replace('/');
+      const token = await auth.login(phone, password);
+      await AsyncStorage.setItem('token', token.token);
+      router.replace('index');
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Login failed');
     } finally {
