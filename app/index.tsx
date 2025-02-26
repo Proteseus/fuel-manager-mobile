@@ -1,5 +1,5 @@
 import { View, StyleSheet, ScrollView, RefreshControl, Dimensions } from 'react-native';
-import { Text, useTheme, Button, Card, DataTable, IconButton } from 'react-native-paper';
+import { Text, useTheme, Button, Card, DataTable } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link } from 'expo-router';
 import { LineChart } from 'react-native-chart-kit';
@@ -99,8 +99,11 @@ export default function Home() {
           <Dropdown
             label="Select Vehicle"
             mode="outlined"
+            visible={showDropDown}
+            showDropDown={() => setShowDropDown(true)}
+            onDismiss={() => setShowDropDown(false)}
             value={selectedVehicleId}
-            onSelect={() => setSelectedVehicleId}
+            onSelect={setSelectedVehicleId}
             options={vehicleOptions}
           />
         </View>

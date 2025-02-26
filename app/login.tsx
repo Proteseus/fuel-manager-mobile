@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Image } from 'react-native';
+import { Text, TextInput, Button, useTheme } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Link, useRouter } from 'expo-router';
 import { auth } from '../lib/auth';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
 
-const Login = () => {
+export default function Login() {
   const router = useRouter();
-  const [phone, setphone] = useState('');
+  const theme = useTheme();
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -16,7 +18,7 @@ const Login = () => {
     setError('');
     try {
       await auth.login(phone, password);
-      router.replace('/index');
+      router.replace('/');
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Login failed');
     } finally {
@@ -25,56 +27,96 @@ const Login = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="phone"
-        value={phone}
-        onChangeText={setphone}
-        keyboardType="phone-pad"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" />
-      ) : (
-        <Button title="Login" onPress={handleLogin} disabled={loading} />
-      )}
-    </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <View style={styles.content}>
+        <Image
+          source={require('../assets/gas-pump.png')}
+          style={styles.logo}
+        />
+        
+        <Text variant="headlineLarge" style={[styles.title, { color: theme.colors.primary }]}>
+          Fuel Manager
+        </Text>
+
+        <View style={styles.form}>
+          <TextInput
+            mode="outlined"
+            label="Phone Number"
+            value={phone}
+            onChangeText={setPhone}
+            keyboardType="phone-pad"
+            autoCapitalize="none"
+            style={styles.input}
+          />
+
+          <TextInput
+            mode="outlined"
+            label="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            style={styles.input}
+          />
+
+          {error ? (
+            <Text style={[styles.error, { color: theme.colors.error }]}>
+              {error}
+            </Text>
+          ) : null}
+
+          <Button
+            mode="contained"
+            onPress={handleLogin}
+            loading={loading}
+            disabled={loading}
+            style={styles.button}
+          >
+            Login
+          </Button>
+
+          <Link href="/register" asChild>
+            <Button
+              mode="outlined"
+              style={styles.button}
+            >
+              Create Account
+            </Button>
+          </Link>
+        </View>
+      </View>
+    </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  content: {
+    flex: 1,
     justifyContent: 'center',
     padding: 20,
+    gap: 32,
+  },
+  logo: {
+    width: 100,
+    height: 100,
+    alignSelf: 'center',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
     textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  form: {
+    gap: 16,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 10,
-    marginBottom: 10,
-    borderRadius: 5,
+    backgroundColor: 'transparent',
   },
   error: {
-    color: 'red',
-    marginBottom: 10,
     textAlign: 'center',
   },
+  button: {
+    padding: 4,
+  },
 });
-
-export default Login;
