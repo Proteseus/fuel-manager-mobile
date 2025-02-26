@@ -1,5 +1,5 @@
-import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
-import { Text, useTheme, Button, Card, DataTable } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, RefreshControl, Dimensions } from 'react-native';
+import { Text, useTheme, Button, Card, DataTable, IconButton } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link } from 'expo-router';
 import { LineChart } from 'react-native-chart-kit';
@@ -16,12 +16,16 @@ export default function Home() {
   const [vehicleList, setVehicleList] = useState<Vehicle[]>([]);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | undefined>(undefined);
   const [showDropDown, setShowDropDown] = useState(false);
+  const [records, setRecords] = useState<FuelRecord[]>([]);
 
   useEffect(() => {
     const fetchVehicles = async () => {
       try {
         const vehicleData = await vehicles.list();
         setVehicleList(vehicleData);
+        if (vehicleData.length > 0 && !selectedVehicleId) {
+          setSelectedVehicleId(vehicleData[0].id);
+        }
       } catch (error) {
         console.error('Failed to fetch vehicles:', error);
       }
@@ -30,58 +34,58 @@ export default function Home() {
     fetchVehicles();
   }, []);
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    try {
-      // const Records = await fuelRecords.list(selectedVehicleId);
-    } catch (error) {
-      console.error('Failed to add fuel record:', error);
-    }
-    setTimeout(() => setRefreshing(false), 2000);
-  }, [selectedVehicleId]);
-
-  const [records, setRecords] = useState<FuelRecord[]>([]);
-  
   useEffect(() => {
     const fetchRecords = async () => {
       if (selectedVehicleId) {
-        const records = await fuelRecords.list(selectedVehicleId);
-        setRecords(records);
+        try {
+          const records = await fuelRecords.list(selectedVehicleId);
+          setRecords(records);
+        } catch (error) {
+          console.error('Failed to fetch records:', error);
+        }
       }
     };
     fetchRecords();
   }, [selectedVehicleId]);
 
-  const sortedRecords = [...records].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      if (selectedVehicleId) {
+        const records = await fuelRecords.list(selectedVehicleId);
+        setRecords(records);
+      }
+      const vehicleData = await vehicles.list();
+      setVehicleList(vehicleData);
+    } catch (error) {
+      console.error('Failed to refresh data:', error);
+    }
+    setRefreshing(false);
+  }, [selectedVehicleId]);
+
+  const sortedRecords = [...records].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   
   const totalSpent = records.reduce((sum, record) => sum + record.totalPrice, 0);
   const avgConsumption = records.reduce((sum, record) => sum + record.avgConsumption, 0) / (records.length || 1);
-  const totalEstimatedDistance = sortedRecords.slice(0, -1).reduce((sum, record) => sum + record.estimatedDistanceKm, 0);
+  const totalEstimatedDistance = sortedRecords.reduce((sum, record) => sum + record.estimatedDistanceKm, 0);
   const totalDistance = sortedRecords.length > 1 
-    ? sortedRecords[sortedRecords.length - 1].odometer - sortedRecords[0].odometer
+    ? sortedRecords[0].odometer - sortedRecords[sortedRecords.length - 1].odometer
     : 0;
   const efficiency = totalDistance > 0 
-    ? (( totalDistance / totalEstimatedDistance ) * 100)
-    : '0';
+    ? Math.round((totalDistance / totalEstimatedDistance) * 100)
+    : 0;
 
-  const chartData = sortedRecords.map(record => ({
+  const chartData = sortedRecords.slice(0, 7).reverse().map(record => ({
     date: format(new Date(record.date), 'MMM d'),
     consumption: record.avgConsumption,
     price: record.pricePerLiter,
     range: record.estimatedDistanceKm
   }));
 
-  const vehicleOptions = vehicleList?.length > 0 
-    ? vehicleList.map(vehicle => ({
-        label: vehicle.plate,
-        value: vehicle.id,
-      }))
-    : [];
-
-  const handleSelectVehicle = (value: string) => {
-    setSelectedVehicleId(value);
-    setShowDropDown(false);
-  };
+  const vehicleOptions = vehicleList.map(vehicle => ({
+    label: `${vehicle.make} ${vehicle.model} (${vehicle.plate})`,
+    value: vehicle.id,
+  }));
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -91,50 +95,39 @@ export default function Home() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        <View style={styles.header}>
-          <Text variant="headlineMedium" style={{ color: theme.colors.onBackground }}>
-            Fuel Manager
-          </Text>
-          <Link href="/vehicle/register" asChild>
-            <Button mode="contained">Add Vehicle</Button>
-          </Link>
+        <View style={styles.dropdownContainer}>
+          <Dropdown
+            label="Select Vehicle"
+            mode="outlined"
+            value={selectedVehicleId}
+            onSelect={() => setSelectedVehicleId}
+            options={vehicleOptions}
+          />
         </View>
 
-        <Dropdown
-          label="Select Vehicle"
-          mode="outlined"
-          value={selectedVehicleId}
-          onSelect={() => handleSelectVehicle}
-          options={vehicleOptions}
-        />
-
-        <View style={styles.statsContainer}>
-          <Card style={styles.statCard}>
+        <View style={styles.statsGrid}>
+          <Card style={styles.statsCard}>
             <Card.Content>
               <Text variant="titleMedium">Total Spent</Text>
-              <Text variant="headlineMedium">Brr {totalSpent}</Text>
+              <Text variant="headlineMedium">Brr {totalSpent.toFixed(2)}</Text>
             </Card.Content>
           </Card>
 
-          <Card style={styles.statCard}>
+          <Card style={styles.statsCard}>
             <Card.Content>
-              <Text variant="titleMedium">Total Fuel</Text>
-              <Text variant="headlineMedium">
-                {records.reduce((sum, record) => sum + record.refillAmount, 0)}L
-              </Text>
+              <Text variant="titleMedium">Avg. Consumption</Text>
+              <Text variant="headlineMedium">{avgConsumption.toFixed(1)} L/100km</Text>
             </Card.Content>
           </Card>
 
-          <Card style={styles.statCard}>
+          <Card style={styles.statsCard}>
             <Card.Content>
-              <Text variant="titleMedium">Est. Distance</Text>
-              <Text variant="headlineMedium">
-                {totalEstimatedDistance} km
-              </Text>
+              <Text variant="titleMedium">Distance</Text>
+              <Text variant="headlineMedium">{totalDistance} km</Text>
             </Card.Content>
           </Card>
 
-          <Card style={styles.statCard}>
+          <Card style={styles.statsCard}>
             <Card.Content>
               <Text variant="titleMedium">Efficiency</Text>
               <Text variant="headlineMedium">{efficiency}%</Text>
@@ -142,74 +135,66 @@ export default function Home() {
           </Card>
         </View>
 
-        <Card style={styles.chartCard}>
-          <Card.Content>
-            <Text variant="titleLarge" style={styles.chartTitle}>Consumption, Range & Price Trends</Text>
-            <LineChart
-              data={{
-                labels: chartData.map(d => d.date),
-                datasets: [
-                  {
-                    data: chartData.map(d => d.consumption),
-                    color: () => theme.colors.primary,
+        {chartData.length > 0 && (
+          <Card style={styles.chartCard}>
+            <Card.Content>
+              <Text variant="titleLarge" style={styles.chartTitle}>Consumption Trend</Text>
+              <LineChart
+                data={{
+                  labels: chartData.map(d => d.date),
+                  datasets: [
+                    {
+                      data: chartData.map(d => d.consumption),
+                      color: () => theme.colors.primary,
+                      strokeWidth: 2,
+                    }
+                  ],
+                }}
+                width={Dimensions.get('window').width - 48}
+                height={220}
+                chartConfig={{
+                  backgroundColor: theme.colors.elevation.level1,
+                  backgroundGradientFrom: theme.colors.elevation.level1,
+                  backgroundGradientTo: theme.colors.elevation.level1,
+                  decimalPlaces: 1,
+                  color: (opacity = 1) => theme.colors.primary,
+                  labelColor: () => theme.colors.onSurface,
+                  style: {
+                    borderRadius: 16,
                   },
-                  {
-                    data: chartData.map(d => d.price),
-                    color: () => theme.colors.secondary,
-                  },
-                  {
-                    data: chartData.map(d => d.range),
-                    color: () => theme.colors.tertiary,
+                  propsForDots: {
+                    r: '6',
+                    strokeWidth: '2',
+                    stroke: theme.colors.primary
                   }
-                ],
-              }}
-              width={320}
-              height={220}
-              chartConfig={{
-                backgroundColor: theme.colors.background,
-                backgroundGradientFrom: theme.colors.background,
-                backgroundGradientTo: theme.colors.background,
-                decimalPlaces: 1,
-                color: (opacity = 1) => theme.colors.primary,
-                labelColor: () => theme.colors.onBackground,
-                style: {
-                  borderRadius: 16,
-                },
-              }}
-              bezier
-              style={styles.chart}
-            />
-          </Card.Content>
-        </Card>
+                }}
+                bezier
+                style={styles.chart}
+              />
+            </Card.Content>
+          </Card>
+        )}
 
-        {records.length > 0 && (
+        {sortedRecords.length > 0 && (
           <Card style={styles.tableCard}>
             <Card.Content>
-              <Text variant="titleLarge" style={styles.chartTitle}>Recent Records</Text>
+              <Text variant="titleLarge" style={styles.sectionTitle}>Recent Records</Text>
               <DataTable>
                 <DataTable.Header>
                   <DataTable.Title>Date</DataTable.Title>
                   <DataTable.Title numeric>Odometer</DataTable.Title>
-                  <DataTable.Title numeric>Est Range</DataTable.Title>
-                  <DataTable.Title numeric>Refill</DataTable.Title>
                   <DataTable.Title numeric>L/100km</DataTable.Title>
-                  <DataTable.Title numeric>Price/L</DataTable.Title>
                   <DataTable.Title numeric>Total</DataTable.Title>
                 </DataTable.Header>
 
-                {sortedRecords.slice(-5).map((record) => (
+                {sortedRecords.slice(0, 5).map((record) => (
                   <DataTable.Row key={record.id}>
                     <DataTable.Cell>
-                      {format(new Date(record.date), 'MMM d, yyyy')}
+                      {format(new Date(record.date), 'MMM d')}
                     </DataTable.Cell>
-                    <DataTable.Cell numeric>{record.odometer} km</DataTable.Cell>
-                    <DataTable.Cell numeric>
-                      {record.currentEstimateKm} / {record.estimatedDistanceKm} km
-                    </DataTable.Cell>
-                    <DataTable.Cell numeric>{record.refillAmount}L</DataTable.Cell>
-                    <DataTable.Cell numeric>{record.avgConsumption}</DataTable.Cell>
-                    <DataTable.Cell numeric>Brr {record.pricePerLiter}</DataTable.Cell>
-                    <DataTable.Cell numeric>Brr {record.totalPrice}</DataTable.Cell>
+                    <DataTable.Cell numeric>{record.odometer}</DataTable.Cell>
+                    <DataTable.Cell numeric>{record.avgConsumption.toFixed(1)}</DataTable.Cell>
+                    <DataTable.Cell numeric>{record.totalPrice.toFixed(2)}</DataTable.Cell>
                   </DataTable.Row>
                 ))}
               </DataTable>
@@ -217,26 +202,38 @@ export default function Home() {
           </Card>
         )}
 
-        {selectedVehicleId ? (
-          <Link href={`/fuel/add?vehicleId=${selectedVehicleId}`} asChild>
+        <View style={styles.buttonContainer}>
+          <Link href="/vehicle/register" asChild>
+            <Button 
+              mode="outlined" 
+              icon="car"
+              style={styles.button}
+            >
+              Add Vehicle
+            </Button>
+          </Link>
+
+          {selectedVehicleId ? (
+            <Link href={`/fuel/add?vehicleId=${selectedVehicleId}`} asChild>
+              <Button
+                mode="contained"
+                icon="gas-station"
+                style={styles.button}
+              >
+                Add Fuel Record
+              </Button>
+            </Link>
+          ) : (
             <Button
               mode="contained"
-              style={styles.addButton}
-              icon="plus"
+              icon="gas-station"
+              disabled
+              style={styles.button}
             >
               Add Fuel Record
             </Button>
-          </Link>
-        ) : (
-          <Button
-            mode="contained"
-            style={styles.addButton}
-            icon="plus"
-            disabled
-          >
-            Add Fuel Record
-          </Button>
-        )}
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -249,35 +246,41 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
+  dropdownContainer: {
+    marginBottom: 16,
   },
-  statsContainer: {
+  statsGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
   },
-  statCard: {
+  statsCard: {
     flex: 1,
-    marginHorizontal: 5,
+    minWidth: '48%',
   },
   chartCard: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   chartTitle: {
-    marginBottom: 10,
+    marginBottom: 16,
   },
   chart: {
     marginVertical: 8,
     borderRadius: 16,
   },
-  addButton: {
-    marginTop: 10,
+  sectionTitle: {
+    marginBottom: 16,
   },
   tableCard: {
-    marginBottom: 20,
+    marginBottom: 16,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+  },
+  button: {
+    flex: 1,
   },
 });

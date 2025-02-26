@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Stack, useRouter, Redirect, usePathname } from 'expo-router';
+import { Stack, useRouter, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme, ActivityIndicator, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -90,7 +90,7 @@ export default function RootLayout() {
       <PaperProvider theme={theme}>
         <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" />
+          <ActivityIndicator size="large" color={theme.colors.primary} />
         </View>
       </PaperProvider>
     );
@@ -100,18 +100,10 @@ export default function RootLayout() {
     setLogoutLoading(true);
     try {
       await auth.logout();
-      // Clear any cached API tokens
-      await AsyncStorage.removeItem('token');
-      // Update state before navigation
       setAuthenticated(false);
-      // Replace current history with login
-      router.replace({
-        pathname: '/login',
-        params: { redirectedFrom: pathname },
-      });
+      router.replace('/login');
     } catch (error) {
       console.error('Logout failed:', error);
-      alert('Logout failed. Please try again.');
     } finally {
       setLogoutLoading(false);
     }
@@ -123,28 +115,57 @@ export default function RootLayout() {
       <Stack
         screenOptions={{
           headerStyle: {
-            backgroundColor: theme.colors.primary,
+            backgroundColor: theme.colors.elevation.level2,
           },
-          headerTintColor: theme.colors.background,
+          headerTintColor: theme.colors.onSurface,
           headerTitleStyle: {
             fontWeight: 'bold',
           },
-          headerRight: ({ tintColor }) => (
+          headerRight: () => (
             authenticated && pathname !== '/login' && pathname !== '/register' ? (
               <IconButton
-                icon="logout"
-                iconColor={tintColor}
+                icon={logoutLoading ? "loading" : "logout"}
+                iconColor={theme.colors.onSurface}
+                disabled={logoutLoading}
                 onPress={handleLogout}
               />
             ) : null
           ),
         }}
       >
-        <Stack.Screen name="index" />
-        <Stack.Screen name="login" />
-        <Stack.Screen name="register" />
-        <Stack.Screen name="fuel/add" />
-        <Stack.Screen name="vehicle/register" />
+        <Stack.Screen 
+          name="index" 
+          options={{
+            title: 'Fuel Manager',
+            headerLargeTitle: true,
+          }}
+        />
+        <Stack.Screen 
+          name="login"
+          options={{
+            headerShown: false
+          }}
+        />
+        <Stack.Screen 
+          name="register"
+          options={{
+            headerShown: false
+          }}
+        />
+        <Stack.Screen 
+          name="fuel/add"
+          options={{
+            title: 'Add Fuel Record',
+            presentation: 'modal'
+          }}
+        />
+        <Stack.Screen 
+          name="vehicle/register"
+          options={{
+            title: 'Register Vehicle',
+            presentation: 'modal'
+          }}
+        />
       </Stack>
     </PaperProvider>
   );
