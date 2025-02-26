@@ -33,6 +33,7 @@
     ],
     "scheme": "fuel-manager",
     "extra": {
+      "apiUrl": "https://fueler.mssaba.com/api",
       "router": {
         "origin": false
       },
