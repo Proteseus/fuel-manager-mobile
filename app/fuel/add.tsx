@@ -73,7 +73,7 @@ export default function AddFuelRecord() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.content}>
         <Text variant="headlineMedium" style={[styles.title, { color: theme.colors.onBackground }]}>
           Add Fuel Record
         </Text>
@@ -197,12 +197,20 @@ export default function AddFuelRecord() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },  
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20,
+    gap: 32,
   },
   scrollContent: {
     padding: 16,
   },
   title: {
     marginBottom: 24,
+    textAlign: 'center',
+    fontWeight: 'bold',
   },
   form: {
     gap: 16,
@@ -214,8 +222,10 @@ const styles = StyleSheet.create({
     color: '#ef4444',
     fontSize: 12,
     marginTop: -12,
+    textAlign: 'center',
   },
   button: {
     marginTop: 8,
+    padding: 4
   },
 });

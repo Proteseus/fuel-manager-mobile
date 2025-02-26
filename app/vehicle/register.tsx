@@ -55,7 +55,7 @@ export default function VehicleRegistration() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.content}>
         <Text variant="headlineMedium" style={[styles.title, { color: theme.colors.onBackground }]}>
           Register Vehicle
         </Text>
@@ -163,12 +163,20 @@ export default function VehicleRegistration() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },  
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20,
+    gap: 32,
   },
   scrollContent: {
     padding: 16,
   },
   title: {
     marginBottom: 24,
+    textAlign: 'center',
+    fontWeight: 'bold',
   },
   form: {
     gap: 16,
@@ -180,8 +188,10 @@ const styles = StyleSheet.create({
     color: '#ef4444',
     fontSize: 12,
     marginTop: -12,
+    textAlign: 'center',
   },
   button: {
     marginTop: 8,
+    padding: 4
   },
 });

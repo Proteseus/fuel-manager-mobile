@@ -46,6 +46,7 @@ export default function Login() {
             onChangeText={setPhone}
             keyboardType="phone-pad"
             autoCapitalize="none"
+            autoComplete='tel-device'
             style={styles.input}
           />
 
