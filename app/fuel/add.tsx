@@ -80,7 +80,10 @@ export default function AddFuelRecord() {
       };
       
       await fuelRecords.create(selectedVehicleId, formattedData);
-      router.back();
+      router.replace({
+        pathname: '/',
+        params: { refresh: Date.now() }
+      });
     } catch (error) {
       console.error('Fuel record error:', error);
       Alert.alert('Error', 'Failed to save fuel record. Please try again.');

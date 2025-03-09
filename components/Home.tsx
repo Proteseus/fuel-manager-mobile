@@ -1,7 +1,7 @@
 import { View, StyleSheet, ScrollView, RefreshControl, Dimensions } from 'react-native';
 import { Text, useTheme, Button, Card, DataTable, IconButton } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Link } from 'expo-router';
+import { Link, useLocalSearchParams } from 'expo-router';
 import { LineChart } from 'react-native-chart-kit';
 import { format } from 'date-fns';
 import React, { useEffect, useState, useCallback } from 'react';
@@ -17,6 +17,7 @@ export function Home() {
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | undefined>(undefined);
   const [showDropDown, setShowDropDown] = useState(false);
   const [records, setRecords] = useState<FuelRecord[]>([]);
+  const { refresh } = useLocalSearchParams<{ refresh: string }>();
 
   useEffect(() => {
     const fetchVehicles = async () => {
@@ -46,7 +47,7 @@ export function Home() {
       }
     };
     fetchRecords();
-  }, [selectedVehicleId]);
+  }, [selectedVehicleId, refresh]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
