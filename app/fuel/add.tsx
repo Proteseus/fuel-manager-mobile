@@ -1,13 +1,17 @@
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Text, TextInput, Button, useTheme } from 'react-native-paper';
-import { DatePickerModal } from 'react-native-paper-dates';
+import { DatePickerModal, registerTranslation, en } from 'react-native-paper-dates';
+import DatePicker from 'react-native-date-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { fuelRecords } from '@/lib/fuel-records';
+
+// Register the locale
+registerTranslation('en', en);
 
 const fuelRecordSchema = z.object({
   date: z.string(),
@@ -18,17 +22,16 @@ const fuelRecordSchema = z.object({
   estimatedDistanceKm: z.number().min(0),
   pricePerLiter: z.number().min(0),
   totalPrice: z.number().min(0).optional()
-}).refine((data) => data.pricePerLiter * data.refillAmount === data.totalPrice, {
-  message: "Total price must be equal to price per liter * refill amount",
-  path: ["totalPrice"],
 });
 
 type FuelRecordFormData = Omit<z.infer<typeof fuelRecordSchema>, 'totalPrice'> & { totalPrice?: number };
 
 export default function AddFuelRecord() {
+  const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>();
   const theme = useTheme();
-  const [date, setDate] = React.useState<Date | undefined>(undefined);
+  const [date, setDate] = React.useState<Date | undefined>(new Date());
   const [open, setOpen] = React.useState(false);
+  const [loading, setLoading] = useState(false);
 
   const onDismissSingle = React.useCallback(() => {
     setOpen(false);
@@ -42,7 +45,7 @@ export default function AddFuelRecord() {
     [setOpen, setDate]
   );
   
-  const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
+  const [selectedVehicleId, setSelectedVehicleId] = useState(vehicleId);
   const { control, handleSubmit, formState: { errors } } = useForm<FuelRecordFormData>({
     resolver: zodResolver(fuelRecordSchema),
     defaultValues: {
@@ -58,16 +61,31 @@ export default function AddFuelRecord() {
 
   const onSubmit = async (data: FuelRecordFormData) => {
     if (!selectedVehicleId) {
-      console.error('No vehicle selected');
+      Alert.alert('Error', 'Please select a vehicle');
       return;
     }
+
+    if (!date) {
+      Alert.alert('Error', 'Please select a date');
+      return;
+    }
+
+    setLoading(true);
     try {
       const totalPrice = data.pricePerLiter * data.refillAmount;
-      const fuelRecord = await fuelRecords.create(selectedVehicleId, { ...data, totalPrice });
-      console.log(data);
+      const formattedData = {
+        ...data,
+        date: date.toISOString().split('T')[0],
+        totalPrice,
+      };
+      
+      await fuelRecords.create(selectedVehicleId, formattedData);
       router.back();
     } catch (error) {
       console.error('Fuel record error:', error);
+      Alert.alert('Error', 'Failed to save fuel record. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -79,6 +97,13 @@ export default function AddFuelRecord() {
         </Text>
         
         <View style={styles.form}>
+          {Object.keys(errors).length > 0 && (
+            <Text style={styles.errorText}>
+              {Object.values(errors)
+                .map((error) => error.message)
+                .join(', ')}
+            </Text>
+          )}
           <Button onPress={() => setOpen(true)} uppercase={false} mode="outlined">
             {date ? date.toLocaleDateString() : 'Select Date'}
           </Button>
@@ -88,7 +113,10 @@ export default function AddFuelRecord() {
             visible={open}
             onDismiss={onDismissSingle}
             date={date}
-            onConfirm={onConfirmSingle}
+            onConfirm={(date) => {
+              setOpen(false)
+              setDate(date.date)
+            }}
           />
 
           <Controller
@@ -185,6 +213,8 @@ export default function AddFuelRecord() {
             mode="contained"
             onPress={handleSubmit(onSubmit)}
             style={styles.button}
+            loading={loading}
+            disabled={loading}
           >
             Save Record
           </Button>

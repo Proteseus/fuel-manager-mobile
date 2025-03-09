@@ -228,7 +228,13 @@ export function Home() {
           </Link>
 
           {selectedVehicleId ? (
-            <Link href={`/fuel/add?vehicleId=${selectedVehicleId}`} asChild>
+            <Link 
+              href={{
+                pathname: "/fuel/add",
+                params: { vehicleId: selectedVehicleId }
+              }} 
+              asChild
+            >
               <Button
                 mode="contained"
                 icon="gas-station"

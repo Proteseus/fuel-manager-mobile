@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, createContext } from 'react';
 import { Stack, useRouter, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme, ActivityIndicator, View } from 'react-native';
@@ -55,6 +55,14 @@ const CombinedDarkTheme = {
   },
 };
 
+export const AuthContext = createContext<{
+  authenticated: boolean;
+  setAuthenticated: (value: boolean) => void;
+}>({
+  authenticated: false,
+  setAuthenticated: () => {},
+});
+
 export default function RootLayout() {
   const router = useRouter();
   const colorScheme = useColorScheme();
@@ -71,6 +79,7 @@ export default function RootLayout() {
         setAuthenticated(!!token);
       } catch (error) {
         console.error('Auth check failed:', error);
+        setAuthenticated(false);
       } finally {
         setLoading(false);
       }
@@ -87,13 +96,23 @@ export default function RootLayout() {
     }
   }, [loading, authenticated, pathname]);
 
+  const authContext = React.useMemo(
+    () => ({
+      authenticated,
+      setAuthenticated,
+    }),
+    [authenticated]
+  );
+
   if (loading) {
     return (
       <PaperProvider theme={theme}>
-        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-        </View>
+        <AuthContext.Provider value={authContext}>
+          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+          </View>
+        </AuthContext.Provider>
       </PaperProvider>
     );
   }
@@ -113,68 +132,70 @@ export default function RootLayout() {
 
   return (
     <PaperProvider theme={theme}>
-      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-      <Stack
-        screenOptions={{
-          headerStyle: {
-            backgroundColor: theme.colors.elevation.level2,
-          },
-          headerTintColor: theme.colors.onSurface,
-          headerTitleStyle: {
-            fontWeight: 'bold',
-          },
-          headerRight: () => (
-            authenticated && pathname !== '/login' && pathname !== '/register' ? (
-              <IconButton
-                icon={logoutLoading ? "loading" : "logout"}
-                iconColor={theme.colors.onSurface}
-                disabled={logoutLoading}
-                onPress={handleLogout}
-              />
-            ) : null
-          ),
-        }}
-      >
-        <Stack.Screen 
-          name="index" 
-          options={{
-            title: 'Fuel Manager',
-            headerLargeTitle: true,
+      <AuthContext.Provider value={authContext}>
+        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+        <Stack
+          screenOptions={{
+            headerStyle: {
+              backgroundColor: theme.colors.elevation.level2,
+            },
+            headerTintColor: theme.colors.onSurface,
+            headerTitleStyle: {
+              fontWeight: 'bold',
+            },
+            headerRight: () => (
+              authenticated && pathname !== '/login' && pathname !== '/register' ? (
+                <IconButton
+                  icon={logoutLoading ? "loading" : "logout"}
+                  iconColor={theme.colors.onSurface}
+                  disabled={logoutLoading}
+                  onPress={handleLogout}
+                />
+              ) : null
+            ),
           }}
-        />
-        <Stack.Screen 
-          name="login"
-          options={{
-            headerShown: false
-          }}
-        />
-        <Stack.Screen 
-          name="register"
-          options={{
-            headerShown: false
-          }}
-        />
-        <Stack.Screen 
-          name="fuel/add"
-          options={{
-            title: 'Add Fuel Record',
-            presentation: 'modal'
-          }}
-        />
-        <Stack.Screen 
-          name="fuel/records/[id]"
-          options={{
-            title: 'Fuel Records',
-          }}
-        />
-        <Stack.Screen 
-          name="vehicle/register"
-          options={{
-            title: 'Register Vehicle',
-            presentation: 'modal'
-          }}
-        />
-      </Stack>
+        >
+          <Stack.Screen 
+            name="index" 
+            options={{
+              title: 'Fuel Manager',
+              headerLargeTitle: true,
+            }}
+          />
+          <Stack.Screen 
+            name="login"
+            options={{
+              headerShown: false
+            }}
+          />
+          <Stack.Screen 
+            name="register"
+            options={{
+              headerShown: false
+            }}
+          />
+          <Stack.Screen 
+            name="fuel/add"
+            options={{
+              title: 'Add Fuel Record',
+              presentation: 'modal'
+            }}
+          />
+          <Stack.Screen 
+            name="fuel/records/[id]"
+            options={{
+              title: 'Fuel Records',
+            }}
+          />
+          <Stack.Screen 
+            name="vehicle/register"
+            options={{
+              title: 'Register Vehicle',
+              presentation: 'modal'
+            }}
+          />
+        </Stack>
+      </AuthContext.Provider>
     </PaperProvider>
   );
 }

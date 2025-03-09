@@ -9,6 +9,7 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { Vehicle } from '../../types/schema';
 import { vehicles } from '../../lib/vehicles';
+import { Alert } from 'react-native';
 
 const currentYear = new Date().getFullYear();
 const OPTIONS = [
@@ -42,14 +43,18 @@ export default function VehicleRegistration() {
       engineType: 'Gasoline',
     },
   });
+  const [loading, setLoading] = useState(false);
 
   const onSubmit = async (data: VehicleFormData) => {
+    setLoading(true);
     try {
       const newRecord = await vehicles.create(data);
-      console.log(newRecord);
       router.replace('/');
     } catch (error) {
       console.error('Vehicle registration error:', error);
+      Alert.alert('Error', 'Failed to register vehicle. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -151,6 +156,8 @@ export default function VehicleRegistration() {
             mode="contained"
             onPress={handleSubmit(onSubmit)}
             style={styles.button}
+            loading={loading}
+            disabled={loading}
           >
             Register Vehicle
           </Button>

@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, StyleSheet, Image } from 'react-native';
 import { Text, TextInput, Button, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, useRouter } from 'expo-router';
 import { auth } from '../lib/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AuthContext } from './_layout';
 
 export default function Login() {
   const router = useRouter();
   const theme = useTheme();
+  const { setAuthenticated } = useContext(AuthContext);
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,7 +22,10 @@ export default function Login() {
     try {
       const token = await auth.login(phone, password);
       await AsyncStorage.setItem('token', token.token);
-      router.replace('index');
+      setAuthenticated(true);
+      setTimeout(() => {
+        router.replace('/');
+      }, 100);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Login failed');
     } finally {
