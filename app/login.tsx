@@ -42,7 +42,7 @@ export default function Login() {
         />
         
         <Text variant="headlineLarge" style={[styles.title, { color: theme.colors.primary }]}>
-          Fuel Manager
+          Fueler
         </Text>
 
         <View style={styles.form}>
