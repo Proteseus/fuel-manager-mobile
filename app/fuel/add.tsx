@@ -17,10 +17,10 @@ const fuelRecordSchema = z.object({
   date: z.string(),
   currentEstimateKm: z.number().min(0),
   odometer: z.number().min(0),
-  avgConsumption: z.number().min(0),
-  refillAmount: z.number().min(0),
+  avgConsumption: z.coerce.number().min(0),
+  refillAmount: z.coerce.number().min(0),
   estimatedDistanceKm: z.number().min(0),
-  pricePerLiter: z.number().min(0),
+  pricePerLiter: z.coerce.number().min(0),
   totalPrice: z.number().min(0).optional()
 });
 
@@ -159,8 +159,8 @@ export default function AddFuelRecord() {
               <TextInput
                 label="Average Consumption (L/100Km)"
                 value={value.toString()}
-                onChangeText={(text) => onChange(parseFloat(text) || 0)}
-                keyboardType="numeric"
+                onChangeText={(text) => onChange(text || 0)}
+                keyboardType="decimal-pad"
                 error={!!errors.avgConsumption}
                 style={styles.input}
               />
@@ -174,8 +174,8 @@ export default function AddFuelRecord() {
               <TextInput
                 label="Refill Amount (L)"
                 value={value.toString()}
-                onChangeText={(text) => onChange(parseFloat(text) || 0)}
-                keyboardType="numeric"
+                onChangeText={(text) => onChange(text || 0)}
+                keyboardType="decimal-pad"
                 error={!!errors.refillAmount}
                 style={styles.input}
               />
@@ -204,8 +204,8 @@ export default function AddFuelRecord() {
               <TextInput
                 label="Price per Liter"
                 value={value.toString()}
-                onChangeText={(text) => onChange(parseFloat(text) || 0)}
-                keyboardType="numeric"
+                onChangeText={(text) => onChange(text || 0)}
+                keyboardType="decimal-pad"
                 error={!!errors.pricePerLiter}
                 style={styles.input}
               />
