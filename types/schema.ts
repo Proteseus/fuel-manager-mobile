@@ -5,7 +5,8 @@ export interface Vehicle {
     model: string;
     engineType: 'Gasoline' | 'Diesel' | 'Hybrid' | 'Electric' | 'Other';
     yearOfMake: number;
-    userId: string;
+    ownerId: string;
+    driverId: string;
     avgConsumption?: number; // Average L/100km for this vehicle
   }
   
@@ -31,5 +32,6 @@ export interface Vehicle {
 
   export interface AuthResponse {
     token: string;
+    role: string;
   }
   

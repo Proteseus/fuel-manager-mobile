@@ -2,12 +2,18 @@ import { api } from './api';
 import type { Vehicle } from '../types/schema';
 
 export const vehicles = {
-  async list(): Promise<Vehicle[]> {
-    const response = await api.get<Vehicle[]>('/vehicles');
+  async listOwned(): Promise<Vehicle[]> {
+    const response = await api.get<Vehicle[]>('/vehicles/owner');
     if (response.error) throw new Error(response.error);
     return response.data || [];
   },
 
+  async listAssigned(): Promise<Vehicle[]> {
+    const response = await api.get<Vehicle[]>('/vehicles/driver');
+    if (response.error) throw new Error(response.error);
+    return response.data || [];
+  },
+  
   async create(data: Omit<Vehicle, 'id' | 'userId'>): Promise<Vehicle> {
     const response = await api.post<Vehicle>('/vehicles', data);
     if (response.error) throw new Error(response.error);

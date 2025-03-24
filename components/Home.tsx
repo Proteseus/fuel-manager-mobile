@@ -9,6 +9,7 @@ import { Dropdown } from 'react-native-paper-dropdown';
 import { fuelRecords } from '../lib/fuel-records';
 import { vehicles } from '../lib/vehicles';
 import { Vehicle, FuelRecord } from '../types/schema';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export function Home() {
   const theme = useTheme();
@@ -22,7 +23,8 @@ export function Home() {
   useEffect(() => {
     const fetchVehicles = async () => {
       try {
-        const vehicleData = await vehicles.list();
+        const role = await AsyncStorage.getItem('role');
+        const vehicleData = role === 'OWNER' ? await vehicles.listOwned() : await vehicles.listAssigned();
         setVehicleList(vehicleData);
         if (vehicleData.length > 0 && !selectedVehicleId) {
           setSelectedVehicleId(vehicleData[0].id);

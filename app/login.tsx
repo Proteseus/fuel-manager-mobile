@@ -22,6 +22,7 @@ export default function Login() {
     try {
       const token = await auth.login(phone, password);
       await AsyncStorage.setItem('token', token.token);
+      await AsyncStorage.setItem('role', token.role);
       setAuthenticated(true);
       setTimeout(() => {
         router.replace('/');
