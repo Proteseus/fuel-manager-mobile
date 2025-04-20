@@ -5,7 +5,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   name: "Fuel Manager",
   slug: "fueler",
   owner: "debrye",
-  version: "0.6.0",
+  version: "0.6.1",
   orientation: "portrait",
   icon: "./assets/icon.png",
   userInterfaceStyle: "automatic",
