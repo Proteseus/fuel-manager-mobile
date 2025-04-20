@@ -38,7 +38,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ],
   scheme: "fuel-manager",
   extra: {
-    apiUrl: "https://fueler.mssaba.com/api",
+    apiUrl: "https://api.fueler.lewibelayneh.com/api",
     router: {
       origin: false
     },

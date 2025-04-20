@@ -19,7 +19,7 @@
     "production": {
       "node": "23.8.0",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://fueler.mssaba.com/api"
+        "EXPO_PUBLIC_API_URL": "https://api.fueler.lewibelayneh.com/api"
       }
     }
   },
